@@ -39,9 +39,19 @@ func main() {
 	source := make(chan int)
 	done := make(chan interface{})
 	channels := fanOut(done, source, 3)
-	go printChannel(channels[0], "rød")
-	go printChannel(channels[1], "grønn")
-	go printChannel(channels[2], "blå")
+	var wg sync.WaitGroup
+	go func() {
+		printChannel(channels[0], "rød")
+		wg.Done()
+	}()
+	go func() {
+		printChannel(channels[1], "grønn")
+		wg.Done()
+	}()
+	go func() {
+		printChannel(channels[2], "blå")
+		wg.Done()
+	}()
 
 	for i := 1; i <= 5; i++ {
 		//TIP <p>To start your debugging session, right-click your code in the editor and select the Debug option.</p> <p>We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
@@ -52,6 +62,7 @@ func main() {
 	}
 
 	close(source)
+	wg.Wait()
 }
 
 func printChannel(outChan chan int, prefix string) {
