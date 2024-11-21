@@ -10,22 +10,20 @@ func fanOut(done <-chan interface{}, source <-chan int, count int) []chan int {
 	for i := 0; i < count; i++ {
 		result = append(result, make(chan int))
 	}
-	/*
-	  for _, each := range result {
-	     defer close(each)
-
-	*/
 	go func() {
 		for value := range source {
 			var wg sync.WaitGroup
 			wg.Add(len(result))
 			for _, out := range result {
 				go func(out chan int, value int) {
-					defer wg.Done()
 					out <- value
+					wg.Done()
 				}(out, value)
 			}
 			wg.Wait()
+		}
+		for _, each := range result {
+			close(each)
 		}
 	}()
 
@@ -40,6 +38,7 @@ func main() {
 	done := make(chan interface{})
 	channels := fanOut(done, source, 3)
 	var wg sync.WaitGroup
+	wg.Add(len(channels))
 	go func() {
 		printChannel(channels[0], "rød")
 		wg.Done()
